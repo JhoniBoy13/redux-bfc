@@ -3,7 +3,7 @@ import {fetchCounter} from "@/lib/features/api/CounterAPI";
 import {CounterState} from "@/lib/store/states/CounterState";
 
 const initialState : CounterState = {
-        value: 0,
+        value: 6,
         loading: 'idle'
 };
 

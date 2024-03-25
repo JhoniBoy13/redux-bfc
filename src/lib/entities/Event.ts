@@ -5,6 +5,5 @@ import {SelectOption} from "@/lib/entities/SelectOption";
 export interface Event extends DateSpan, SelectOption {
     eventType: EventType;
     description: string;
-    isInCalendar?: boolean;
 }
 

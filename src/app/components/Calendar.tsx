@@ -4,32 +4,40 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin, {DateClickArg, EventResizeDoneArg} from '@fullcalendar/interaction'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import React, {useEffect, useState} from 'react'
-import {DateSelectArg, EventChangeArg, EventClickArg, EventDropArg, EventSourceInput} from '@fullcalendar/core/index.js'
+import {DateSelectArg, EventChangeArg, EventClickArg, EventDropArg, EventHoveringArg, EventSourceInput} from '@fullcalendar/core/index.js'
 import {CostumeEvent} from "@/app/components/CostumeEvent";
 import {Event} from "@/lib/entities/Event";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState, store} from "@/lib/store/store";
-import {selectEventById, setNewEventDate, updateEventToStore} from "@/lib/store/slices/eventSlice";
+import {fetchEventsAsync, resetSelectedEvent, selectEventById, updateEventToStore, updateSelectedEventDate} from "@/lib/store/slices/eventSlice";
 import {DateSpan} from "@/lib/entities/DateSpan";
 import {updateFilterModal, updateInfoModal} from "@/lib/store/slices/modalSlice";
-
 
 export function Calendar() {
 
     const [newDate, setNewDate] = useState<DateSpan>()
     const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
     const events: Event[] = useSelector((state: RootState) => state.events.events);
+    const selectedEvent: Event = useSelector((state: RootState) => state.events.selectedEvent);
     const dispatch = useDispatch();
 
+
     useEffect(() => {
-        const filterEventsCopy: Event[] = events.filter(event => (event.eventType?.isFiltered === undefined || event.eventType?.isFiltered === false) && (event.isInCalendar === true || event.isInCalendar === undefined))
+        const filterEventsCopy: Event[] = events.filter(event => (event.eventType?.isFiltered === undefined || event.eventType?.isFiltered === false))
         setFilteredEvents(filterEventsCopy);
-    }, [events]);
+    }, [events, store.getState().events.loading]);
+
+    useEffect(() => {
+        // @ts-ignore
+        dispatch(fetchEventsAsync());
+
+    }, []);
 
     async function handleDateClick(data: DateClickArg) {
         if (newDate) {
-            dispatch(setNewEventDate(newDate))
-            dispatch(updateInfoModal({openInfoModal: true}))
+            dispatch(updateSelectedEventDate({end: newDate.end, start: newDate.start, allDay: newDate.allDay}));
+            console.log("selected Event", selectedEvent);
+            dispatch(updateInfoModal({openInfoModal: true, isNew: true}));
         }
     }
 
@@ -41,26 +49,33 @@ export function Calendar() {
 
     function updateEvent(data: EventChangeArg) {
         dispatch(selectEventById(data.event.id))
-        let event: Event = {...store.getState().events.selectedEvent}
-        if (event) {
-            event.allDay = data.event.allDay
+        setNewDate({allDay: selectedEvent.allDay, start: selectedEvent.start, end: selectedEvent.end})
+
+        if (newDate) {
+            newDate.allDay = data.event.allDay
 
             if (data.event.start) {
-                event.start = data.event.start.toISOString()
+                newDate.start = data.event.start.toISOString()
             }
 
             if (data.event.end) {
-                event.end = data.event.end.toISOString()
+                newDate.end = data.event.end.toISOString()
             }
-            dispatch(updateEventToStore(event))
+            console.log('updtaed selected event', selectedEvent)
+            dispatch(updateEventToStore({...selectedEvent, ...newDate}))
         }
     }
 
     function handleEventClick(data: EventClickArg) {
         dispatch(selectEventById(data.event.id))
+        console.log("selected Event", selectedEvent);
         dispatch(updateInfoModal({openInfoModal: true, isNew: false}))
     }
 
+    function handleMouseLeave(data: EventHoveringArg) {
+
+        console.log(data, 'handalMouseLeave')
+    }
 
     return (
         <div className="col-span-8">
@@ -90,14 +105,14 @@ export function Calendar() {
                 eventDurationEditable={true}
                 selectable={true}
                 selectMirror={true}
-                select={((data: DateSelectArg) => handleDateSelect(data))}
+                eventMouseLeave={(data:EventHoveringArg)=> handleMouseLeave(data)}
+                select={(data: DateSelectArg) => handleDateSelect(data)}
                 dateClick={(data: DateClickArg) => handleDateClick(data)}
                 // drop={(data: DropArg) => addEventToCalendar(data)}
                 eventChange={(data: EventChangeArg) => updateEvent(data)}
                 eventDrop={(data: EventDropArg) => updateEvent(data)}
                 eventResize={(data: EventResizeDoneArg) => updateEvent(data)}
                 eventClick={(data: EventClickArg) => handleEventClick(data)}
-
             />
         </div>
     );

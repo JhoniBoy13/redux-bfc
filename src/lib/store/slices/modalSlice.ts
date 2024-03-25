@@ -17,17 +17,16 @@ const ModalSlice = createSlice({
         updateFilterModal(state: WritableDraft<ModalState>, action: PayloadAction<boolean>) {
             state.filterModal = action.payload
         },
-        updateInfoModal(state: WritableDraft<ModalState>, action: PayloadAction<{openInfoModal: boolean, isNew?: boolean}>) {
+        updateInfoModal(state: WritableDraft<ModalState>, action: PayloadAction<{ openInfoModal: boolean, isNew?: boolean }>) {
+            state.isNew = (action.payload.isNew) ? action.payload.isNew : false
             state.infoModal = action.payload.openInfoModal
-            state.isNew = action.payload.isNew ?? true
-
-
         },
         updateDeleteModal(state: WritableDraft<ModalState>, action: PayloadAction<boolean>) {
             state.deleteModal = action.payload
+            state.isNew = false
         },
     },
 })
 
-export const {updateFilterModal,updateInfoModal,updateDeleteModal} = ModalSlice.actions
+export const {updateFilterModal, updateInfoModal, updateDeleteModal} = ModalSlice.actions
 export default ModalSlice.reducer

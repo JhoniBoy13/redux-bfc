@@ -5,5 +5,4 @@ import {EventType} from "@/lib/entities/EventType";
 export interface EventState extends LoadingState {
     events: Event[];
     selectedEvent: Event;
-    // eventTypes: EventType[];
 }
